@@ -6,7 +6,9 @@ using PersonInformationGrpcService.Infrastructure.Persistence;
 using PersonInformationGrpcService.Infrastructure.Repositories;
 using PersonInformationGrpcService.Presentation.Services;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Reflection;
+using PersonInformationGrpcService.Presentation.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,8 +23,18 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreatePersonValidator>();
 
 builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 
+builder.Host.UseSerilog((context, config) =>
+{
+    config.WriteTo.Console()
+          .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day);
+});
 
 var app = builder.Build();
+
+app.UseMiddleware<DatabaseExceptionMiddleware>();
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<RpcExceptionMiddleware>();
+
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<PersonService>();

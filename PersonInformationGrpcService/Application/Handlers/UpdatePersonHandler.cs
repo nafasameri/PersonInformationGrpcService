@@ -3,6 +3,7 @@ using PersonInformationGrpcService.Application.Commands;
 using PersonInformationGrpcService.Domain.Entities;
 using PersonInformationGrpcService.Domain.Repositories;
 using AutoMapper;
+using Grpc.Core;
 
 namespace PersonInformationGrpcService.Application.Handlers
 {
@@ -19,9 +20,16 @@ namespace PersonInformationGrpcService.Application.Handlers
 
         public async Task<bool> Handle(UpdatePersonCommand request, CancellationToken cancellationToken)
         {
-            var person = _mapper.Map<Person>(request);
+            try
+            {
+                var person = _mapper.Map<Person>(request);
 
-            return await _repository.UpdatePersonAsync(person, cancellationToken);
+                return await _repository.UpdatePersonAsync(person, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+            }
         }
     }
 }
